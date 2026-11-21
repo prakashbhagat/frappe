@@ -1,1 +1,0 @@
-@../../studio/AGENTS.md

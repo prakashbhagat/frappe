@@ -85,7 +85,7 @@ def log_error(
 		fingerprint=fingerprint,
 	)
 
-	if frappe.flags.read_only or defer_insert or frappe.db.in_read_only_transaction:
+	if frappe.flags.read_only or defer_insert:
 		error_log.deferred_insert()
 	else:
 		error_log.insert(ignore_permissions=True)

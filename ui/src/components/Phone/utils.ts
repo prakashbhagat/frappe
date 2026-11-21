@@ -1,5 +1,4 @@
 import countriesJson from "../../../../frappe/geo/country_info.json";
-import { get_country_flag_url } from "../../../../frappe/public/js/frappe/utils/country_flag_url.js";
 import type { Country } from "./types";
 
 export interface PhoneDetails {
@@ -85,7 +84,7 @@ export function getCountryFromCode(code?: string | null): Country | null {
 }
 
 export function getFlagUrl(country: Country): string {
-  return get_country_flag_url(country.code);
+  return `https://flagcdn.com/${country.code}.svg`;
 }
 
 function getBrowserTimezone(): string {

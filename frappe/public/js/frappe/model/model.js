@@ -45,7 +45,6 @@ $.extend(frappe.model, {
 		"Text",
 		"Text Editor",
 		"Time",
-		"Vue Component",
 	],
 
 	no_value_type: [
@@ -60,7 +59,6 @@ $.extend(frappe.model, {
 		"Image",
 		"Fold",
 		"Heading",
-		"Vue Component",
 	],
 
 	layout_fields: ["Section Break", "Column Break", "Tab Break", "Fold"],

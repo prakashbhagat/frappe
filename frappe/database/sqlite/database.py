@@ -473,18 +473,18 @@ class SQLiteDatabase(SQLiteExceptionUtil, Database):
 		self.commit()
 
 	def begin(self, *, read_only=False):
-		if read_only or frappe.flags.read_only or self.in_read_only_transaction:
+		if read_only or frappe.flags.read_only:
 			if self._conn:
 				self._conn.close()
 			self._conn = self.get_connection(read_only=True)
 			self._cursor = self._conn.cursor()
-			self._read_only_connection = True
+			self.read_only = True
 
-		elif getattr(self, "_read_only_connection", False):
+		elif hasattr(self, "read_only") and self.read_only:
 			self._conn.close()
 			self._conn = self.get_connection()
 			self._cursor = self._conn.cursor()
-			self._read_only_connection = False
+			self.read_only = False
 
 		try:
 			self.sql("BEGIN")
@@ -496,9 +496,6 @@ class SQLiteDatabase(SQLiteExceptionUtil, Database):
 		"""Commit current transaction. Calls SQL `COMMIT`."""
 		if not self._conn:
 			self.connect()
-
-		if self.in_read_only_transaction:
-			return self.rollback()
 
 		if self._disable_transaction_control:
 			warnings.warn(message=TRANSACTION_DISABLED_MSG, stacklevel=2)

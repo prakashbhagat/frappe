@@ -97,7 +97,6 @@ export default class WidgetGroup {
 	}
 
 	remove_widget(widget_obj) {
-		widget_obj.destroy();
 		widget_obj.widget.remove();
 		this.widgets_list.filter((widget) => {
 			if (widget.name == widget_obj.name) return false;
@@ -173,10 +172,6 @@ export default class WidgetGroup {
 		});
 	}
 
-	destroy() {
-		this.widgets_list.forEach((wid) => wid.destroy());
-	}
-
 	get_widget_config() {
 		this.update_widget_order();
 		let prepared_dict = {};
@@ -236,10 +231,6 @@ export class SingleWidgetGroup {
 		this.widgets_list.forEach((wid) => {
 			wid.customize(this.options);
 		});
-	}
-
-	destroy() {
-		this.widgets_list.forEach((wid) => wid.destroy());
 	}
 }
 

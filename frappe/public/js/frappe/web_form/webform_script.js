@@ -88,13 +88,8 @@ frappe.ready(function () {
 
 				return df;
 			}
-
-			if (["Link", "Table MultiSelect"].includes(df.fieldtype)) {
+			if (df.fieldtype === "Link") {
 				df.only_select = true;
-			}
-			// validate_link_and_fetch isn't guest-allowed; save still validates links
-			if (df.fieldtype === "Table MultiSelect") {
-				df.ignore_link_validation = true;
 			}
 			if (["Attach", "Attach Image"].includes(df.fieldtype)) {
 				if (typeof df.options !== "object") {

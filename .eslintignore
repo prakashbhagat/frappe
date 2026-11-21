@@ -6,4 +6,3 @@ frappe/core/doctype/report/boilerplate/*
 frappe/public/js/frappe/class.js
 frappe/templates/includes/*
 frappe/www/website_script.js
-studio/*

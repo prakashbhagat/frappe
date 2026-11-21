@@ -882,10 +882,11 @@ def evaluate_alert(doc: Document, alert, event=None):
 		)
 		frappe.throw(message, title=_("Error in Notification"))
 	except Exception as e:
-		title = str(e) or type(e).__name__
+		title = str(e)
 		message = frappe.get_traceback(with_context=True)
 		frappe.log_error(title=title, message=message)
-		frappe.throw(title, title=_("Error in Notification"))
+		msg = f"<details><summary>{title}</summary>{message}</details>"
+		frappe.throw(msg, title=_("Error in Notification"))
 
 
 def get_comments_for_context(doc):

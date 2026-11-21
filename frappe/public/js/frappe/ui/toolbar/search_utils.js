@@ -53,7 +53,7 @@ frappe.search.utils = {
 				if (route[1]) {
 					values.push([route[1], route]);
 				}
-			} else if (route[0] && !frappe.router.page_info_for(route)?.system_page) {
+			} else if (route[0]) {
 				values.push([frappe.route_titles[route.join("/")] || route[0], route]);
 			}
 		});
@@ -281,7 +281,6 @@ frappe.search.utils = {
 		var out = [];
 		this.pages = {};
 		$.each(frappe.boot.page_info, function (name, p) {
-			if (p.system_page) return;
 			me.pages[p.title] = p;
 			p.name = name;
 		});

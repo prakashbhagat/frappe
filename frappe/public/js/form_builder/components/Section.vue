@@ -34,7 +34,7 @@
 						v-html="frappe.utils.icon(collapsed ? 'down' : 'up-line', 'sm')"
 					></div>
 				</div>
-				<Dropdown v-if="store.can_edit_layout" :options="options" @click.stop />
+				<Dropdown v-if="!store.read_only" :options="options" @click.stop />
 			</div>
 			<div v-if="section.df.description" class="section-description">
 				{{ section.df.description }}
@@ -55,8 +55,6 @@
 					:animation="200"
 					:easing="store.get_animation"
 					:disabled="store.read_only"
-					@start="store.start_drag('column')"
-					@end="store.end_drag"
 				>
 					<template #item="{ element }">
 						<Column
@@ -92,7 +90,7 @@ const store = useStore();
 // delete/backspace to delete the field
 const { Backspace } = useMagicKeys();
 whenever(Backspace, (value) => {
-	if (value && selected.value && store.not_using_input && store.can_edit_layout) {
+	if (value && selected.value && store.not_using_input) {
 		remove_section();
 	}
 });
@@ -173,9 +171,6 @@ function select_section() {
 }
 
 function move_sections_to_tab() {
-	// this bypasses store.add_new_tab(), so repeat its page limit
-	store.validate_web_form_page_limit();
-
 	let new_tab = move_children_to_parent(props, "tab", "section", store.form.layout);
 
 	// activate tab
@@ -296,8 +291,8 @@ const options = computed(() => {
 	// add move to tab option if the current section is not the first section
 	if (props.tab.sections.indexOf(props.section) > 0) {
 		groups[0].items.push({
-			label: store.tab_text.move_sections,
-			tooltip: store.tab_text.move_sections_tooltip,
+			label: __("Move sections to new tab"),
+			tooltip: __("Move current and all subsequent sections to a new tab"),
 			onClick: move_sections_to_tab,
 		});
 	}

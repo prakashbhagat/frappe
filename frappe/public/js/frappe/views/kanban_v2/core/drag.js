@@ -57,6 +57,6 @@ export function bindColumnDropTarget(el, data, canDrop) {
 	});
 }
 
-export function startDragMonitor(onDrop, onDropTargetChange) {
-	return monitorForElements({ onDrop, onDropTargetChange });
+export function startDragMonitor(onDrop) {
+	return monitorForElements({ onDrop });
 }

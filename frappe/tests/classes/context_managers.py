@@ -175,13 +175,12 @@ def timeout_context(seconds=30, error_message="Operation timed out.") -> None:
 	def _handle_timeout(signum, frame):
 		raise Exception(error_message)
 
-	previous_handler = signal.signal(signal.SIGALRM, _handle_timeout)
+	signal.signal(signal.SIGALRM, _handle_timeout)
 	signal.alarm(30 if callable(seconds) else seconds)
 	try:
 		yield
 	finally:
 		signal.alarm(0)
-		signal.signal(signal.SIGALRM, previous_handler)
 
 
 def timeout(seconds=30, error_message="Operation timed out."):
@@ -232,7 +231,6 @@ def trace_fields(
 	"""
 	from frappe.model.trace import traced_field
 
-	missing = object()
 	original_attrs = {}
 	original_init = doc_class.__init__
 
@@ -244,7 +242,7 @@ def trace_fields(
 
 	# Apply traced fields
 	for f_name, config in field_configs.items():
-		original_attrs[f_name] = doc_class.__dict__.get(f_name, missing)
+		original_attrs[f_name] = getattr(doc_class, f_name, None)
 		f_forbidden_values = config.get("forbidden_values")
 		f_custom_validation = config.get("custom_validation")
 		setattr(doc_class, f_name, traced_field(f_name, f_forbidden_values, f_custom_validation))
@@ -261,7 +259,7 @@ def trace_fields(
 		yield doc_class
 	finally:
 		for f_name, original_attr in original_attrs.items():
-			if original_attr is not missing:
+			if original_attr is not None:
 				setattr(doc_class, f_name, original_attr)
 			else:
 				delattr(doc_class, f_name)

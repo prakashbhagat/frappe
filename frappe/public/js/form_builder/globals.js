@@ -56,6 +56,5 @@ export function registerGlobalComponents(app) {
 		.component("TextControl", TextControl)
 		.component("TextEditorControl", TextEditorControl)
 		.component("TimeControl", DataControl)
-		.component("VueComponentControl", DataControl)
 		.component("FetchFromControl", FetchFromControl);
 }

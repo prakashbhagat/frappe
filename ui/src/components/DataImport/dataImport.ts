@@ -129,7 +129,6 @@ const NO_VALUE_FIELDTYPES = [
   "Image",
   "Fold",
   "Heading",
-  "Vue Component",
 ];
 const TABLE_FIELDTYPES = ["Table", "Table MultiSelect"];
 

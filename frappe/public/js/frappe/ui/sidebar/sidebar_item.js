@@ -96,14 +96,17 @@ frappe.ui.sidebar_item.get_route = function (item, edit_mode = false, shell = nu
 			const title = workspace ? workspace.title : item.link_to;
 			path = "/desk/private/" + frappe.router.slug(title);
 		}
+
+		if (item.route) {
+			path = item.route;
+		}
 	} else if (item.link_type === "URL") {
 		path = item.url;
-	} else if (item.link_type == "Page") {
+	} else if (item.link_type == "Page" && item.route_options) {
 		path = frappe.utils.generate_route({
 			type: item.link_type,
 			name: item.link_to,
-			route: item.route ? `${item.link_to}/${item.route}` : undefined,
-			route_options: item.route_options ? JSON.parse(item.route_options) : undefined,
+			route_options: JSON.parse(item.route_options),
 		});
 	} else {
 		let args = {
@@ -134,12 +137,6 @@ frappe.ui.sidebar_item.get_route = function (item, edit_mode = false, shell = nu
 				path = `/desk/${doctype_slug}?layout=${encodeURIComponent(layout_info.name)}`;
 			}
 		}
-	}
-
-	// A system page opens in no shell, and the router takes one off its URL, so a link that named
-	// one would never match the URL it leads to.
-	if (item.link_type === "Page" && frappe.router.page_info_for([item.link_to])?.system_page) {
-		return path;
 	}
 
 	return in_shell(path, shell);
@@ -274,8 +271,6 @@ frappe.ui.sidebar_item.TypeSectionBreak = class SectionBreakSidebarItem extends 
 		const me = this;
 		this.old_state;
 		$(document).on("sidebar-expand", function (event, expand) {
-			// A phone has no rail, so a closed drawer is not a reason to change any group.
-			if (frappe.app.sidebar.panel_can_close()) return;
 			// A heading keeps its row in the rail and loses only its text (see sidebar.scss), so
 			// groups stay apart by the gap they had rather than by a rule drawn for the occasion.
 			if (expand.sidebar_expand) {
@@ -346,7 +341,7 @@ frappe.ui.sidebar_item.TypeSectionBreak = class SectionBreakSidebarItem extends 
 			}
 			// Docking the sidebar is how a collapsed one shows the group that was just
 			// expanded, since the group itself is off screen while collapsed.
-			if (!frappe.app.sidebar.sidebar_expanded && !frappe.app.sidebar.panel_can_close()) {
+			if (!frappe.app.sidebar.sidebar_expanded) {
 				frappe.app.sidebar.open();
 				this.open();
 			}

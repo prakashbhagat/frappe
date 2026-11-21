@@ -33,7 +33,6 @@ class SidebarItem(Document):
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
-		route: DF.Data | None
 		route_options: DF.Code | None
 		show_arrow: DF.Check
 		type: DF.Literal["Link", "Section Break", "Spacer"]

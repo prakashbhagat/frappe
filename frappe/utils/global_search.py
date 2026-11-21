@@ -543,11 +543,6 @@ def search(text: str, start: int = 0, limit: int = 20, doctype: str = ""):
 	return sorted_results
 
 
-WEB_SEARCH_MAX_SEGMENTS = 5
-WEB_SEARCH_MAX_LIMIT = 100
-WEB_SEARCH_MAX_TEXT_LENGTH = 1000
-
-
 @frappe.whitelist(allow_guest=True)
 def web_search(text: str, scope: str | None = None, start: int = 0, limit: int = 20):
 	"""
@@ -559,12 +554,8 @@ def web_search(text: str, scope: str | None = None, start: int = 0, limit: int =
 	:return: Array of result objects
 	"""
 
-	limit = max(0, min(cint(limit), WEB_SEARCH_MAX_LIMIT))
-	start = max(0, cint(start))
-	text = (text or "")[:WEB_SEARCH_MAX_TEXT_LENGTH]
-
 	results = []
-	texts = list(dict.fromkeys(t for t in text.split("&") if t.strip()))[:WEB_SEARCH_MAX_SEGMENTS]
+	texts = text.split("&")
 	for text in texts:
 		common_query = """ SELECT `doctype`, `name`, `content`, `title`, `route`
 			FROM `__global_search`
@@ -606,7 +597,7 @@ def web_search(text: str, scope: str | None = None, start: int = 0, limit: int =
 		r.relevance = words_match
 
 	results = sorted(results, key=lambda x: x.relevance, reverse=True)
-	return results[:WEB_SEARCH_MAX_LIMIT]
+	return results
 
 
 def get_distinct_words(text):

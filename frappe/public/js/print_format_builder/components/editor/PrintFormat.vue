@@ -265,10 +265,7 @@ let color_css = computed(() => {
 	if (value_color) {
 		css += `.print-format-doc .field .value,
 .print-format-doc .field.left-right .value,
-.print-format-doc .field.field-inline .value { color: ${value_color}; }
-.print-format-doc .field .value a,
-.print-format-doc .field .value pre,
-.print-format-doc .field .value code { color: inherit; }\n`;
+.print-format-doc .field.field-inline .value { color: ${value_color}; }\n`;
 	}
 	return css;
 });

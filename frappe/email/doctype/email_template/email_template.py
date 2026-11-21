@@ -92,7 +92,7 @@ def get_email_templates(
 
 	reference_doctype = (filters or {}).get("reference_doctype", "")
 
-	return frappe.get_list(
+	return frappe.get_all(
 		"Email Template",
 		filters={"name": ("like", f"%{txt}%")},
 		or_filters=[

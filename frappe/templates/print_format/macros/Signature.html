@@ -7,7 +7,7 @@
 </div>
 {%- else -%}
 <div class="value">
-    {% if value %}<img src="{{ value|e }}" alt="{{ _(df.label)|e }}">{% endif %}
+    <img src="{{ value|e }}" alt="{{ _(df.label)|e }}">
 </div>
 {%- endif -%}
 {%- endblock -%}

@@ -182,35 +182,12 @@ frappe.ui.form.Attachments = class Attachments {
 			return;
 		}
 
-		// The pane sits beside the form, outside the sidebar, because render_form()
-		// builds the sidebar again on every refresh — and moving an iframe in the DOM
-		// makes it reload the file it is showing. So the pane outlives the sidebar,
-		// and each new Attachments takes over the one already there.
-		const layout = this.frm.page.wrapper.find(".layout-main").first();
-		this.attachment_preview = layout.children(".attachment-preview");
-
-		if (!this.attachment_preview.length) {
-			this.attachment_preview = $(`<div class="attachment-preview hidden"></div>`).appendTo(
-				layout
-			);
-		} else if (this.attachment_preview.attr("data-docname") !== this.frm.docname) {
-			// left open on the document that was in this form before this one
-			this.hide_attachment_preview();
-		}
+		this.attachment_preview = $(`<div class="attachment-preview hidden"></div>`).appendTo(
+			this.frm.page.sidebar
+		);
 	}
 
 	show_attachment_preview(attachment, file_url) {
-		// Already showing this file for this document: rebuilding the body below would
-		// make the browser load the file again, which is wasted work and, for a PDF,
-		// drops the page the reader was on.
-		if (
-			!this.attachment_preview.hasClass("hidden") &&
-			this.attachment_preview.attr("data-file-url") === file_url &&
-			this.attachment_preview.attr("data-docname") === this.frm.docname
-		) {
-			return;
-		}
-
 		let file_name = attachment.file_name || file_url;
 		let preview_type = this.get_preview_type(attachment, file_url);
 		let escaped_file_name = frappe.utils.escape_html(file_name);
@@ -235,11 +212,8 @@ frappe.ui.form.Attachments = class Attachments {
 		this.set_preview_width(this.attachment_preview_width);
 		this.frm.page.wrapper.addClass("attachment-preview-open");
 
-		this.attachment_preview
-			.removeClass("hidden")
-			.attr({ "data-docname": this.frm.docname, "data-file-url": file_url })
-			.html(
-				`<div class="attachment-preview-resize-handle"></div>
+		this.attachment_preview.removeClass("hidden").html(
+			`<div class="attachment-preview-resize-handle"></div>
 				<div class="attachment-preview-header">
 					<div class="attachment-preview-title">
 						<div class="ellipsis" title="${escaped_file_name}">${escaped_file_name}</div>
@@ -272,7 +246,7 @@ frappe.ui.form.Attachments = class Attachments {
 				<div class="attachment-preview-body">
 					${preview_html}
 				</div>`
-			);
+		);
 
 		this.attachment_preview.find(".attachment-preview-close").on("click", () => {
 			this.hide_attachment_preview();
@@ -504,7 +478,6 @@ frappe.ui.form.Attachments = class Attachments {
 		event.preventDefault();
 
 		this.is_resizing_attachment_preview = true;
-		this.width_before_resize = this.attachment_preview_width;
 		this.frm.page.wrapper.addClass("attachment-preview-resizing");
 
 		if (this.current_attachment_preview_type === "pdf") {
@@ -556,16 +529,6 @@ frappe.ui.form.Attachments = class Attachments {
 			.remove();
 		$(document).off(".attachment_preview_resize");
 		this.save_preview_width();
-
-		// Safari's PDF viewer keeps the width it was loaded at, so load it again at the new one
-		if (
-			this.current_attachment_preview_type === "pdf" &&
-			this.attachment_preview_width !== this.width_before_resize &&
-			frappe.utils.get_browser().name === "Safari"
-		) {
-			const iframe = this.attachment_preview.find("iframe").get(0);
-			if (iframe) iframe.setAttribute("src", iframe.src);
-		}
 	}
 
 	set_preview_width(width) {

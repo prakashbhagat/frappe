@@ -120,9 +120,12 @@ export default class GridRow {
 						console.trace(e);
 					});
 			} else {
-				// the grid reads df.data, often a copy of df.get_data(), so edit that copy
-				const data = this.grid.get_data();
-				this.grid.df.data = data;
+				let data = null;
+				if (this.grid.df.get_data) {
+					data = this.grid.df.get_data();
+				} else {
+					data = this.grid.df.data;
+				}
 
 				const index = data.findIndex((d) => d.name === this.doc.name);
 
@@ -182,17 +185,10 @@ export default class GridRow {
 			"Update"
 		);
 	}
-	sync_doc_from_locals() {
-		// re-point to the latest copy of this row in `locals`.
-		// unnamed (unsaved) rows aren't addressable by name there, so they keep
-		// the doc they were rendered with instead of getting dropped or
-		// cross-linked to another unnamed row.
-		if (this.frm && this.doc?.name) {
-			this.doc = locals[this.doc.doctype]?.[this.doc.name] || this.doc;
-		}
-	}
 	refresh() {
-		this.sync_doc_from_locals();
+		if (this.frm && this.doc) {
+			this.doc = locals[this.doc.doctype][this.doc.name];
+		}
 
 		if (this.grid.template && !this.grid.meta.editable_grid) {
 			this.render_template();
@@ -1350,7 +1346,10 @@ export default class GridRow {
 			return this;
 		}
 
-		this.sync_doc_from_locals();
+		if (this.frm) {
+			// reload doc
+			this.doc = locals[this.doc.doctype][this.doc.name];
+		}
 
 		// hide other
 		var open_row = this.get_open_form();

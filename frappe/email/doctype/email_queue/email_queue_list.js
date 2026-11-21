@@ -44,7 +44,7 @@ function show_toggle_sending_button(list_view) {
 }
 
 function add_bulk_retry_button_to_actions(list_view) {
-	const retry = () => {
+	list_view.page.add_actions_menu_item(__("Retry Sending"), () => {
 		frappe.msgprint(
 			__(
 				"Updating Email Queue Statuses. The emails will be picked up in the next scheduled run."
@@ -63,6 +63,5 @@ function add_bulk_retry_button_to_actions(list_view) {
 				}
 			},
 		});
-	};
-	list_view.page.add_actions_menu_item(__("Retry Sending"), retry, false, null, "rotate-cw");
+	});
 }

@@ -15,7 +15,6 @@ class WebFormField(Document):
 		from frappe.types import DF
 
 		allow_read_on_all_link_options: DF.Check
-		apply_user_permissions: DF.Check
 		default: DF.Data | None
 		depends_on: DF.Code | None
 		description: DF.Text | None

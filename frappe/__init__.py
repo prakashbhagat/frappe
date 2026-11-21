@@ -55,7 +55,7 @@ from .utils.jinja import (
 	render_template,
 )
 
-__version__ = "16.60.2"
+__version__ = "16.55.2"
 __title__ = "Frappe Framework"
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -485,7 +485,7 @@ def is_whitelisted(method):
 
 		summary = _("You are not permitted to access this resource. Login to access")
 		detail = _("Function {0} is not whitelisted.").format(bold(f"{method.__module__}.{method.__name__}"))
-		msg = f"<p>{summary}</p><div>{detail}</div>"
+		msg = f"<details><summary>{summary}</summary>{detail}</details>"
 		throw(msg, PermissionError, title=_("Method Not Allowed"))
 
 	if is_guest and method not in xss_safe_methods:
@@ -497,9 +497,6 @@ def is_whitelisted(method):
 
 
 def read_only():
-	"""Mark a function as one that never writes, so its reads may go to a replica
-	(`read_from_replica`) and Flow runs it without asking the user, in a read-only transaction."""
-
 	def innfn(fn):
 		@functools.wraps(fn)
 		def wrapper_fn(*args, **kwargs):
@@ -518,7 +515,6 @@ def read_only():
 
 			return retval
 
-		wrapper_fn.read_only = True
 		return wrapper_fn
 
 	return innfn

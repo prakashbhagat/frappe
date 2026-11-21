@@ -95,20 +95,10 @@ class DeskViews:
 		return {cstr(report) for report in cls.get_allowed_reports(cache=cache, user=user).keys() if report}
 
 	@classmethod
-	@frappe.request_cache
-	def get_cached_allowed_report_names(cls, user: str) -> set[str]:
-		"""`get_allowed_report_names`, computed once per request for `user`. Do not mutate the result."""
-		return cls.get_allowed_report_names(user=user)
-
-	@classmethod
 	def get_allowed_dashboards(cls, cache=False):
 		"""Return dashboards the user is allowed to see.
 
-		A dashboard that holds charts or cards is permitted when the user can access at least
-		one of them. A dashboard that holds neither is permitted on the `Dashboard` document's
-		own permission, which `frappe.get_list` applies. An app draws such a dashboard with an
-		island, and draws its own not-permitted state below the document.
-
+		A dashboard is permitted when the user can access at least one of its charts or cards.
 		Evaluated for the current session user and cached like pages and reports.
 		"""
 		from frappe.desk.doctype.dashboard.dashboard import get_permitted_cards, get_permitted_charts
@@ -117,32 +107,10 @@ class DeskViews:
 			# `module` rides along so the client can resolve a dashboard's home sidebar; the row
 			# stays a dict in a list rather than becoming a name-keyed map, so search_utils'
 			# get_dashboards() is untouched.
-			try:
-				dashboards = frappe.get_list("Dashboard", fields=["name", "module"])
-			except frappe.PermissionError:
-				# a user with no read access to `Dashboard` simply has no dashboards. This runs
-				# during boot, so the error must not escape and take the desk down with it.
-				frappe.clear_last_message()
-				return []
-
-			if not dashboards:
-				return []
-
-			# One query per child table, so no dashboard is loaded to learn it is empty.
-			filled = set()
-			for child in ("Dashboard Chart Link", "Number Card Link"):
-				filled.update(
-					frappe.get_all(
-						child,
-						filters={"parenttype": "Dashboard", "parent": ("in", [d.name for d in dashboards])},
-						pluck="parent",
-					)
-				)
-
 			return [
 				{"name": d.name, "module": d.module}
-				for d in dashboards
-				if d.name not in filled or get_permitted_charts(d.name) or get_permitted_cards(d.name)
+				for d in frappe.get_all("Dashboard", fields=["name", "module"])
+				if get_permitted_charts(d.name) or get_permitted_cards(d.name)
 			]
 
 		return cls._allowed_entity_cache("allowed_dashboards", frappe.session.user, build, cache=cache)
@@ -190,16 +158,11 @@ class DeskViews:
 		if is_report:
 			columns = (report.name.as_("title"), report.ref_doctype, report.report_type, report.module)
 		else:
-			# The two flags decide a page's shell on the client: see `Sidebar.shell_for_route`.
-			columns = (page.title.as_("title"), page.module, page.system_page, page.shared_page)
+			columns = (page.title.as_("title"), page.module)
 
 		customRole = DocType("Custom Role")
 		hasRole = DocType("Has Role")
 		parentTable = DocType(parent)
-
-		def shell_flags(row):
-			# Only the flag that is set is shipped; most pages have neither.
-			return {flag: 1 for flag in ("system_page", "shared_page") if row.get(flag)}
 
 		def exclude_disabled_reports(query):
 			return query.where(report.disabled == 0) if is_report else query
@@ -226,7 +189,6 @@ class DeskViews:
 				"title": p.title,
 				"ref_doctype": p.ref_doctype,
 				"module": p.module,
-				**shell_flags(p),
 			}
 
 		subq = (
@@ -249,12 +211,7 @@ class DeskViews:
 
 		for p in pages_with_standard_roles:
 			if p.name not in has_role:
-				has_role[p.name] = {
-					"modified": p.modified,
-					"title": p.title,
-					"module": p.module,
-					**shell_flags(p),
-				}
+				has_role[p.name] = {"modified": p.modified, "title": p.title, "module": p.module}
 				if parent == "Report":
 					has_role[p.name].update({"ref_doctype": p.ref_doctype})
 
@@ -271,12 +228,7 @@ class DeskViews:
 
 		for r in rows_with_no_roles:
 			if r.name not in has_role:
-				has_role[r.name] = {
-					"modified": r.modified,
-					"title": r.title,
-					"module": r.module,
-					**shell_flags(r),
-				}
+				has_role[r.name] = {"modified": r.modified, "title": r.title, "module": r.module}
 				if is_report:
 					has_role[r.name] |= {"ref_doctype": r.ref_doctype}
 

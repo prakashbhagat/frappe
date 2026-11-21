@@ -62,7 +62,6 @@ no_value_fields = (
 	"Image",
 	"Fold",
 	"Heading",
-	"Vue Component",
 )
 NO_VALUE_FIELDS = frozenset(no_value_fields)
 
@@ -76,7 +75,6 @@ display_fieldtypes = (
 	"Image",
 	"Fold",
 	"Heading",
-	"Vue Component",
 )
 
 numeric_fieldtypes = ("Currency", "Int", "Long Int", "Float", "Percent", "Check")

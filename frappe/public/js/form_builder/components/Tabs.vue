@@ -12,7 +12,7 @@ const store = useStore();
 // delete/backspace to delete the field
 const { Backspace } = useMagicKeys();
 whenever(Backspace, (value) => {
-	if (value && selected.value && store.not_using_input && store.can_edit_layout) {
+	if (value && selected.value && store.not_using_input) {
 		remove_tab(store.current_tab, "", true);
 	}
 });
@@ -20,11 +20,6 @@ whenever(Backspace, (value) => {
 const dragged = ref(false);
 const selected = computed(() => store.selected(store.current_tab.df.name));
 const has_tabs = computed(() => store.form.layout.tabs.length > 1);
-// a Web Form names the page the author is on from page 1; a DocType only grows a strip
-// once it has two tabs
-const has_tab_strip = computed(() => has_tabs.value || store.is_web_form);
-// a Web Form always has page 1, so its only page cannot be deleted
-const can_remove_tab = computed(() => !store.is_web_form || has_tabs.value);
 store.form.active_tab = store.form.layout.tabs[0].df.name;
 
 function activate_tab(tab) {
@@ -32,11 +27,9 @@ function activate_tab(tab) {
 }
 
 function drag_over(tab) {
-	// a drag that opens a new tab on the way to the add button cancels these switches
-	let count = store.tabs_added_by_drag;
 	!dragged.value &&
 		setTimeout(() => {
-			if (count === store.tabs_added_by_drag) store.form.active_tab = tab.df.name;
+			store.form.active_tab = tab.df.name;
 		}, 500);
 }
 
@@ -59,9 +52,6 @@ function remove_tab(tab, event, force = false) {
 	// is remove_tab_btn is not visible then return
 	if (!event?.currentTarget?.offsetParent && !force) return;
 
-	// page 1 always exists. The header hides its delete button, but Backspace bypasses that
-	if (store.is_web_form && store.form.layout.tabs.length === 1) return;
-
 	if (store.is_customize_form && store.current_tab.df.is_custom_field == 0) {
 		frappe.msgprint(__("Cannot delete standard field. You can hide it if you want"));
 		throw "cannot delete standard field";
@@ -71,12 +61,16 @@ function remove_tab(tab, event, force = false) {
 		delete_tab(tab, true);
 	} else {
 		confirm_dialog(
-			store.tab_text.delete_title,
-			delete_tab_message(tab),
+			__("Delete Tab", null, "Title of confirmation dialog"),
+			__(
+				"Are you sure you want to delete the tab? All the sections along with fields in the tab will be moved to the previous tab.",
+				null,
+				"Confirmation dialog message"
+			),
 			() => delete_tab(tab),
-			store.tab_text.delete_button,
+			__("Delete tab", null, "Button text"),
 			() => delete_tab(tab, true),
-			store.tab_text.delete_with_fields
+			__("Delete entire tab with fields", null, "Button text")
 		);
 	}
 }
@@ -91,12 +85,6 @@ function delete_tab(tab, with_children) {
 			if (!is_tab_empty(tab)) {
 				// move all sections from current tab to previous tab
 				prev_tab.sections = [...prev_tab.sections, ...tab.sections];
-			}
-		} else if (store.is_web_form) {
-			// no previous page, so move the fields forward into page 2
-			let next_tab = tabs[1];
-			if (!is_tab_empty(tab)) {
-				next_tab.sections = [...tab.sections, ...next_tab.sections];
 			}
 		} else {
 			// create a new tab and push sections to it
@@ -117,29 +105,12 @@ function delete_tab(tab, with_children) {
 	store.form.active_tab = tabs[prev_tab_index].df.name;
 	store.form.selected_field = null;
 }
-
-// page 1 has no previous page, so its fields move forward instead (see delete_tab)
-function delete_tab_message(tab) {
-	if (store.is_web_form && store.form.layout.tabs.indexOf(tab) === 0) {
-		return __(
-			"Are you sure you want to delete the page? All the sections along with fields in the page will be moved to the next page.",
-			null,
-			"Confirmation dialog message"
-		);
-	}
-
-	return store.tab_text.delete_message;
-}
-
-// an unnamed Web Form page shows its position
-function page_number_label(index) {
-	if (store.is_web_form) return __("Page {0}", [index + 1]);
-}
 </script>
 
 <template>
-	<div class="tab-header" v-if="has_tab_strip">
+	<div class="tab-header" v-if="store.form.layout.tabs.length > 1">
 		<draggable
+			v-show="has_tabs"
 			class="tabs"
 			v-model="store.form.layout.tabs"
 			group="tabs"
@@ -149,7 +120,7 @@ function page_number_label(index) {
 			item-key="id"
 			:disabled="store.read_only"
 		>
-			<template #item="{ element, index }">
+			<template #item="{ element }">
 				<div
 					:class="['tab', store.form.active_tab == element.df.name ? 'active' : '']"
 					:title="element.df.fieldname"
@@ -161,14 +132,12 @@ function page_number_label(index) {
 				>
 					<EditableInput
 						:text="element.df.label"
-						:placeholder="page_number_label(index) || __('Tab Label')"
-						:empty_label="page_number_label(index)"
+						:placeholder="__('Tab Label')"
 						v-model="element.df.label"
 					/>
 					<button
-						v-if="can_remove_tab"
 						class="remove-tab-btn btn btn-xs"
-						:title="store.tab_text.remove_title"
+						:title="__('Remove tab')"
 						@click.stop="remove_tab(element, $event)"
 						:hidden="store.read_only"
 					>
@@ -177,18 +146,16 @@ function page_number_label(index) {
 				</div>
 			</template>
 		</draggable>
-		<div
-			class="tab-actions"
-			:hidden="!store.can_edit_layout"
-			@dragenter="store.add_tab_for_drag"
-		>
+		<div class="tab-actions" :hidden="store.read_only">
 			<button
-				class="new-tab-btn btn btn-xs flex items-center gap-1"
-				:title="store.tab_text.add_title"
+				class="new-tab-btn btn btn-xs"
+				:class="{ 'no-tabs': !has_tabs }"
+				:title="__('Add new tab')"
 				@click="add_new_tab"
 			>
-				<span v-html="frappe.utils.icon('plus', 'xs')"></span>
-				{{ store.tab_text.add }}
+				<div class="add-btn-text">
+					{{ __("Add tab") }}
+				</div>
 			</button>
 		</div>
 	</div>
@@ -209,8 +176,6 @@ function page_number_label(index) {
 				:easing="store.get_animation"
 				item-key="id"
 				:disabled="store.read_only"
-				@start="store.start_drag('section')"
-				@end="store.end_drag"
 			>
 				<template #item="{ element }">
 					<Section
@@ -220,8 +185,8 @@ function page_number_label(index) {
 					/>
 				</template>
 			</draggable>
-			<div class="empty-tab" :hidden="!store.can_edit_layout">
-				<div v-if="has_tabs">{{ store.tab_text.drop_hint }}</div>
+			<div class="empty-tab" :hidden="store.read_only">
+				<div v-if="has_tabs">{{ __("Drag & Drop a section here from another tab") }}</div>
 				<div v-if="has_tabs">{{ __("OR") }}</div>
 				<button class="btn btn-default btn-sm" @click="add_new_section">
 					{{ __("Add a new section") }}
@@ -234,6 +199,7 @@ function page_number_label(index) {
 <style lang="scss" scoped>
 .tab-header {
 	display: flex;
+	justify-content: space-between;
 	min-height: 42px;
 	align-items: center;
 	background-color: var(--fg-color);
@@ -244,32 +210,32 @@ function page_number_label(index) {
 
 	.tabs {
 		display: flex;
-		// only as wide as the tabs, so the add button sits beside the last one and the
-		// strip scrolls only once it runs out of room
-		flex: 0 1 auto;
+		flex: 1;
 		overflow-x: auto;
-		min-width: 0;
+		width: 0px;
 	}
 
 	.tab-actions {
 		margin-right: 20px;
-		flex: none;
 
-		// reads as one more tab, not a button: no fill, only the text colour lifts
 		.btn {
-			background-color: transparent;
+			background-color: var(--control-bg);
+			padding: 2px;
+			margin-left: 4px;
 			box-shadow: none;
-			color: var(--text-muted);
-			// the plus follows the text colour in both themes
-			--icon-stroke: currentColor;
 
-			&:hover,
-			&:focus,
-			&:active {
-				background-color: transparent;
-				box-shadow: none;
-				color: var(--text-color);
+			.add-btn-text {
+				padding: 4px 8px;
 			}
+
+			&:hover {
+				background-color: var(--btn-default-hover-bg);
+			}
+		}
+
+		.no-tabs {
+			opacity: 1;
+			margin-left: 15px;
 		}
 	}
 
@@ -312,8 +278,7 @@ function page_number_label(index) {
 
 		.remove-tab-btn {
 			position: absolute;
-			// inside the tab, or hovering the last tab overflows the strip and shows a scrollbar
-			right: 0;
+			right: -2px;
 			display: none;
 			padding: 2px;
 		}

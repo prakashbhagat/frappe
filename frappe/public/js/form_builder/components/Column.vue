@@ -27,8 +27,6 @@
 			:easing="store.get_animation"
 			item-key="id"
 			:disabled="store.read_only"
-			@start="store.start_drag('field')"
-			@end="store.end_drag"
 		>
 			<template #item="{ element }">
 				<Field
@@ -38,10 +36,10 @@
 				/>
 			</template>
 		</draggable>
-		<div class="empty-column" :hidden="!store.can_edit_layout">
+		<div class="empty-column" :hidden="store.read_only">
 			<AddFieldButton :column="column" />
 		</div>
-		<div v-if="column.fields.length && store.can_edit_layout" class="add-new-field-btn">
+		<div v-if="column.fields.length" class="add-new-field-btn">
 			<AddFieldButton :field="column.fields[column.fields.length - 1]" :column="column" />
 		</div>
 	</div>
@@ -62,7 +60,7 @@ const store = useStore();
 // delete/backspace to delete the field
 const { Backspace } = useMagicKeys();
 whenever(Backspace, (value) => {
-	if (value && selected.value && store.not_using_input && store.can_edit_layout) {
+	if (value && selected.value && store.not_using_input) {
 		remove_column();
 	}
 });

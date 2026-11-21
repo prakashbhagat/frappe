@@ -46,7 +46,7 @@ export default class WebFormList {
 						field.fieldtype = "Data";
 					}
 
-					if (["Table", "Table MultiSelect", "Signature"].includes(field.fieldtype)) {
+					if (["Table", "Signature"].includes(field.fieldtype)) {
 						return;
 					}
 

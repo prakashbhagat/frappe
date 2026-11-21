@@ -50,7 +50,6 @@ class WebsiteSettings(Document):
 		home_page: DF.Data | None
 		indexing_authorization_code: DF.Data | None
 		indexing_refresh_token: DF.Data | None
-		indexing_refresh_token_secret: DF.Password | None
 		navbar_template: DF.Link | None
 		navbar_template_values: DF.Code | None
 		robots_txt: DF.Code | None
@@ -156,13 +155,13 @@ class WebsiteSettings(Document):
 	def get_access_token(self):
 		from frappe.integrations.google_oauth import GoogleOAuth
 
-		if not self.indexing_refresh_token_secret:
+		if not self.indexing_refresh_token:
 			button_label = frappe.bold(_("Allow API Indexing Access"))
 			raise frappe.ValidationError(_("Click on {0} to generate Refresh Token.").format(button_label))
 
 		oauth_obj = GoogleOAuth("indexing")
 		res = oauth_obj.refresh_access_token(
-			self.get_password(fieldname="indexing_refresh_token_secret", raise_exception=False)
+			self.get_password(fieldname="indexing_refresh_token", raise_exception=False)
 		)
 
 		return res.get("access_token")
